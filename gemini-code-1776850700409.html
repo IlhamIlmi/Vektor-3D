@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simulator Vektor 3D - Interaktif & Analitis</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600;700&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+
+:root {
+  --bg: #090b10; --surface: #101318; --surface2: #161a24; --surface3: #1c2030;
+  --border: #1e2436; --border2: #344060;
+  --text: #e6eaf4; --text2: #8a99b8; --text3: #4a5b82;
+  --blue: #4d9eff; --blue2: #1a5fc4;
+  --red: #ff6b8a; --red2: #b82044;
+  --green: #2effc0; --green2: #00a872;
+  --gold: #ffc740; --gold2: #c49000;
+  --purple: #b57bff; --purple2: #6d28d9;
+  --pink: #ff70c8;
+  --badge-bg: rgba(9,11,16,0.88);
+}
+
+body.light-mode {
+  --bg: #f8fafc; --surface: #ffffff; --surface2: #f1f5f9; --surface3: #e2e8f0;
+  --border: #cbd5e1; --border2: #94a3b8;
+  --text: #0f172a; --text2: #334155; --text3: #475569;
+  --blue: #1d4ed8; --blue2: #1e40af;
+  --red: #be123c; --red2: #9f1239;
+  --green: #15803d; --green2: #166534;
+  --gold: #b45309; --gold2: #92400e;
+  --badge-bg: rgba(255,255,255,0.95);
+}
+
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:'Inter', system-ui, sans-serif; transition: background 0.3s, color 0.3s;}
+
+.layout{ display:grid; grid-template-rows:64px 1fr; grid-template-columns:1fr 380px; grid-template-areas:"hdr hdr" "cvs pnl"; height:100vh; }
+
+header{ grid-area:hdr; display:flex; align-items:center; justify-content:space-between; padding:0 24px; gap:12px; background:var(--surface); border-bottom:1px solid var(--border); position:relative; z-index:10; }
+.h-title{ font-size:19px; font-weight:800; background:linear-gradient(120deg,var(--blue),var(--purple),var(--pink)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; white-space:nowrap; }
+.h-sub{ font-size:11px; color:var(--text3); letter-spacing:1px; text-transform:uppercase; font-family:'Fira Code',monospace;}
+.stats{ display:flex; gap:10px }
+.stat{ background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:6px 14px; display:flex; flex-direction:column; align-items:center; gap:2px; min-width:70px;}
+.stat label{ font-size:9px; font-family:'Fira Code',monospace; color:var(--text3); text-transform:uppercase;}
+.stat span{ font-family:'Fira Code',monospace; font-size:15px; font-weight:700;}
+.header-btns { display: flex; gap: 8px; }
+.h-btn{ background:var(--surface2); border:1px solid var(--border); border-radius:8px; color:var(--text2); font-family:'Inter',sans-serif; font-size:13px; font-weight:600; padding:8px 14px; cursor:pointer; transition:all .2s;}
+.h-btn:hover{ background:var(--surface3); color:var(--text)}
+
+.canvas-area{ grid-area:cvs; position:relative; overflow:hidden; background:var(--bg); }
+#canvas-container { width: 100%; height: 100%; display: block; outline: none;}
+
+.col-vec { display: inline-flex; flex-direction: column; justify-content: center; align-items: center; position: relative; padding: 2px 7px; margin: 0 4px; vertical-align: middle; font-family: 'Fira Code', monospace; line-height: 1.2; font-size: 1.1em; font-weight: 700; color: currentColor;}
+.col-vec::before, .col-vec::after { content: ''; position: absolute; top: 0; bottom: 0; width: 5px; border: 1.5px solid currentColor; }
+.col-vec::before { left: 0; border-right: none; border-radius: 4px 0 0 4px; }
+.col-vec::after { right: 0; border-left: none; border-radius: 0 4px 4px 0; }
+
+.c-badge{ position:absolute; top:16px; left:16px; background:var(--badge-bg); backdrop-filter:blur(10px); border:1px solid var(--border); border-radius:8px; padding:8px 14px; font-family:'Fira Code',monospace; font-size:12px; color:var(--text2); pointer-events:none;}
+.c-result{ position:absolute; bottom:16px; left:16px; background:var(--badge-bg); backdrop-filter:blur(12px); border:1px solid var(--border2); border-radius:10px; padding:12px 16px; font-family:'Fira Code',monospace; font-size:14px; display:flex; align-items:center; pointer-events:none; gap:4px;}
+.z-hint{ position:absolute; bottom:16px; right:16px; font-family:'Fira Code',monospace; font-size:11px; color:var(--text3); text-align:right; pointer-events:none; background:var(--badge-bg); padding:6px 10px; border-radius:6px;}
+
+.panel{ grid-area:pnl; background:var(--surface); border-left:1px solid var(--border); display:flex; flex-direction:column; overflow:hidden; }
+.panel-tabs{ display:flex; border-bottom:1px solid var(--border); flex-shrink:0;}
+.tab{ flex:1; padding:12px 2px; font-size:10px; font-weight:700; text-align:center; color:var(--text3); cursor:pointer; transition:all .2s; border-bottom:2px solid transparent; letter-spacing:1px; text-transform:uppercase;}
+.tab.active{ color:var(--blue); border-bottom-color:var(--blue)}
+.tab-body{ display:none; flex:1; overflow-y:auto; padding:16px; flex-direction:column; gap:14px}
+.tab-body.active{ display:flex}
+.tab-body::-webkit-scrollbar{ width:6px}
+.tab-body::-webkit-scrollbar-thumb{ background:var(--border2); border-radius:3px}
+
+.card{ background:var(--surface2); border:1px solid var(--border); border-radius:14px; padding:16px; display:flex; flex-direction:column; gap:12px;}
+.card-title{ font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:2px; color:var(--text3); font-family:'Fira Code',monospace}
+
+.vec-hdr{ display:flex; align-items:center; gap:8px}
+.vdot{ width:10px; height:10px; border-radius:50%; flex-shrink:0}
+.vname{ font-weight:700; font-size:14px; flex:1}
+.srow{ display:grid; grid-template-columns:24px 1fr 1fr 1fr; align-items:center; gap:6px}
+.sax{ font-size:12px; color:var(--text2); font-family:'Fira Code',monospace; text-align:center; font-weight:700; background:var(--surface3); padding:6px; border-radius:6px;}
+.nin{ width:100%; background:var(--surface3); border:1px solid var(--border2); border-radius:8px; color:var(--text); font-family:'Fira Code',monospace; font-size:13px; font-weight:600; padding:8px; outline:none; transition:all .2s; text-align:center;}
+.nin:focus{ border-color:var(--blue); background:var(--surface);}
+
+.op-sel{ background:var(--surface3); border:1px solid var(--border2); border-radius:8px; color:var(--text); font-family:'Inter',sans-serif; font-size:13px; font-weight:600; padding:12px 14px; width:100%; outline:none; cursor:pointer;}
+.btn-row{ display:flex; gap:10px}
+.btn-anim{ flex:1; background:linear-gradient(130deg,var(--blue2),var(--purple2)); border:none; border-radius:10px; color:#fff; font-family:'Inter',sans-serif; font-weight:700; font-size:13px; padding:12px; cursor:pointer; transition:all .2s;}
+.btn-anim:hover{ opacity:.85}
+.btn-reset{ background:var(--surface3); border:1px solid var(--border2); border-radius:10px; color:var(--text2); font-family:'Inter',sans-serif; font-size:16px; font-weight:700; padding:12px 18px; cursor:pointer;}
+
+.alg-section{ background:var(--surface3); border:1px solid var(--border); border-radius:10px; padding:14px; display:flex; flex-direction:column; gap:10px;}
+.alg-section h3{ font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:1.5px; color:var(--text3); font-family:'Fira Code',monospace}
+.alg-step{ background:var(--surface); border-left:3px solid var(--border2); border-radius:0 8px 8px 0; padding:10px 14px; font-family:'Fira Code',monospace; font-size:13px; color:var(--text2); line-height:1.9;}
+.alg-step .step-num{ color:var(--text3); font-size:10px; display:block; margin-bottom:6px; letter-spacing:1px; text-transform:uppercase; font-family:'Inter',sans-serif; font-weight:700;}
+.alg-box{ background:var(--bg); border:1px solid; border-radius:9px; padding:12px 14px; text-align:center; font-family:'Fira Code',monospace; font-size:14px; font-weight:700; margin:4px 0; display:flex; align-items:center; justify-content:center; gap:6px;}
+
+.overlay{ position:fixed; inset:0; background:rgba(0,0,0,.78); z-index:1000; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(8px); animation:fadeIn .3s ease; display:none;}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes fadeOut{from{opacity:1}to{opacity:0}}
+.popup{ background:var(--surface); border:1px solid var(--border2); border-radius:22px; max-width:520px; width:92%; padding:30px; box-shadow:0 0 80px rgba(77,158,255,.1); animation:popIn .38s cubic-bezier(.22,1,.36,1);}
+@keyframes popIn{from{opacity:0;transform:scale(.88) translateY(20px)}to{opacity:1;transform:none}}
+.pop-hdr{ display:flex; align-items:center; gap:12px; margin-bottom:22px}
+.pop-icon{ font-size:32px}
+.pop-title{ font-size:22px; font-weight:800; background:linear-gradient(120deg,var(--blue),var(--purple)); -webkit-background-clip:text; -webkit-text-fill-color:transparent;}
+.pop-sub{ font-size:12px; color:var(--text3); font-family:'Fira Code',monospace; font-weight:600;}
+.guide-list{ display:flex; flex-direction:column; gap:12px; margin-bottom:24px}
+.guide-item{ display:flex; align-items:flex-start; gap:14px; background:var(--surface2); border:1px solid var(--border); border-radius:12px; padding:16px}
+.guide-icon{ font-size:22px; flex-shrink:0; margin-top:2px}
+.guide-text h4{ font-size:15px; font-weight:700; color:var(--text); margin-bottom:4px}
+.guide-text p{ font-size:13px; color:var(--text2); line-height:1.6}
+.btn-start{ width:100%; background:linear-gradient(130deg,var(--blue2),var(--purple2)); border:none; border-radius:12px; color:#fff; font-family:'Inter',sans-serif; font-weight:700; font-size:15px; padding:16px; cursor:pointer;}
+</style>
+</head>
+<body>
+
+<div class="overlay" id="overlay">
+  <div class="popup">
+    <div class="pop-hdr">
+      <span class="pop-icon">🚀</span>
+      <div>
+        <div class="pop-title">Simulator Vektor 3D</div>
+        <div class="pop-sub">Pembaruan: Dimensi Keruangan (R3)</div>
+      </div>
+    </div>
+    <div class="guide-list">
+      <div class="guide-item">
+        <span class="guide-icon">👀</span>
+        <div class="guide-text">
+          <h4>Kamera 360 Derajat</h4>
+          <p>Kini Anda berada di ruang 3D. <b>Klik kiri & geser</b> mouse untuk memutar kamera. <b>Klik kanan & geser</b> untuk memindah titik pusat. <b>Scroll</b> untuk Zoom.</p>
+        </div>
+      </div>
+      <div class="guide-item">
+        <span class="guide-icon">✖️</span>
+        <div class="guide-text">
+          <h4>Operasi Perkalian Silang (Cross Product)</h4>
+          <p>Tersedia operasi baru khusus ruang 3D: <b>$u \times v$</b>. Putar kamera untuk melihat bagaimana resultannya selalu tegak lurus terhadap u dan v.</p>
+        </div>
+      </div>
+      <div class="guide-item">
+        <span class="guide-icon">🧱</span>
+        <div class="guide-text">
+          <h4>Sumbu Kartesius R3</h4>
+          <p>Garis <b style="color:var(--red)">Merah = Sumbu X</b>, garis <b style="color:var(--green)">Hijau = Sumbu Y</b>, dan garis <b style="color:var(--blue)">Biru = Sumbu Z</b>.</p>
+        </div>
+      </div>
+    </div>
+    <button class="btn-start" onclick="closePopup()">Mulai Eksplorasi 3D!</button>
+  </div>
+</div>
+
+<div class="layout">
+  <header>
+    <div>
+      <div class="h-title">⟨ Simulator Vektor 3D ⟩</div>
+      <div class="h-sub">Matematika · Kelas XI · Fase F</div>
+    </div>
+    <div class="stats">
+      <div class="stat"><label>|u|</label><span id="mag-u" style="color:var(--blue)">0.00</span></div>
+      <div class="stat"><label>|v|</label><span id="mag-v" style="color:var(--red)">0.00</span></div>
+      <div class="stat"><label>|hasil|</label><span id="mag-r" style="color:var(--green)">0.00</span></div>
+    </div>
+    <div class="header-btns">
+      <button class="h-btn" id="btn-theme" onclick="toggleTheme()">☀️ Terang</button>
+      <button class="h-btn" onclick="document.getElementById('overlay').style.cssText='display:flex;animation:fadeIn .3s ease'">❓ Info 3D</button>
+    </div>
+  </header>
+
+  <div class="canvas-area">
+    <div id="canvas-container"></div>
+    <div class="c-badge" style="top:16px;left:16px;">Sumbu: <span style="color:var(--red)">X</span> | <span style="color:var(--green)">Y</span> | <span style="color:var(--blue)">Z</span></div>
+    <div class="c-result" id="result-info">—</div>
+    <div class="z-hint">Klik Kiri: Putar Kamera | Klik Kanan: Geser (Pan) | Scroll: Zoom</div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-tabs">
+      <div class="tab active" onclick="switchTab('kontrol',this)">🎛️ Kontrol</div>
+      <div class="tab" onclick="switchTab('aljabar',this)">🧮 Aljabar</div>
+    </div>
+
+    <div class="tab-body active" id="tab-kontrol">
+      <div class="card" style="border-color:var(--border2); background:var(--surface3)">
+        <div class="card-title" style="color:var(--text)">1. Pilih Operasi</div>
+        <select class="op-sel" id="op-sel" onchange="updateUI(); upd();">
+          <option value="add">➕  Penjumlahan (u + v)</option>
+          <option value="sub">➖  Pengurangan (u − v)</option>
+          <option value="cross">✖️  Perkalian Silang (u × v)</option>
+          <option value="scale">⚗️  Perkalian Skalar (k · u)</option>
+          <option value="both">👁  Tampilkan u &amp; v saja</option>
+        </select>
+      </div>
+
+      <div class="card" id="grp-u">
+        <div class="card-title">2. Atur Vektor u</div>
+        <div class="vec-hdr">
+          <div class="vdot" style="background:var(--blue);box-shadow:0 0 6px var(--blue)"></div>
+          <span class="vname" style="color:var(--blue)">Vektor u</span>
+        </div>
+        <div class="srow">
+          <span class="sax" style="color:var(--red)">x</span>
+          <span class="sax" style="color:var(--green)">y</span>
+          <span class="sax" style="color:var(--blue)">z</span>
+        </div>
+        <div class="srow" style="grid-template-columns:1fr 1fr 1fr; gap:6px;">
+          <input class="nin" type="number" id="ux" value="3" step="any" oninput="upd()">
+          <input class="nin" type="number" id="uy" value="4" step="any" oninput="upd()">
+          <input class="nin" type="number" id="uz" value="2" step="any" oninput="upd()">
+        </div>
+      </div>
+
+      <div class="card" id="grp-v">
+        <div class="card-title">3. Atur Vektor v</div>
+        <div class="vec-hdr">
+          <div class="vdot" style="background:var(--red);box-shadow:0 0 6px var(--red)"></div>
+          <span class="vname" style="color:var(--red)">Vektor v</span>
+        </div>
+        <div class="srow" style="grid-template-columns:1fr 1fr 1fr; gap:6px;">
+          <input class="nin" type="number" id="vx" value="1" step="any" oninput="upd()">
+          <input class="nin" type="number" id="vy" value="-2" step="any" oninput="upd()">
+          <input class="nin" type="number" id="vz" value="3" step="any" oninput="upd()">
+        </div>
+      </div>
+
+      <div class="card" id="grp-k">
+        <div class="card-title">3. Atur Skalar k</div>
+        <div class="srow" style="grid-template-columns:30px 1fr;">
+          <span class="sax" style="color:var(--gold)">k</span>
+          <input class="nin" type="number" id="sk" value="2" step="any" oninput="upd()">
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn-reset" onclick="resetAll()" title="Reset" style="padding:12px 14px">↺</button>
+        <button class="btn-reset" onclick="recenterCamera()" title="Pusatkan Kamera">📹 Recenter</button>
+      </div>
+    </div>
+
+    <div class="tab-body" id="tab-aljabar">
+      <div id="alg-content" style="display:flex;flex-direction:column;gap:14px"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ── THEME & 3D COLORS ── */
+let isLightMode = false;
+let colors = {
+    bg: 0x090b10, grid: 0x1e2436, axes: 0x344060,
+    u: 0x4d9eff, v: 0xff6b8a, res: 0x2effc0, k: 0xffc740
+};
+
+function toggleTheme() {
+    document.body.classList.toggle('light-mode');
+    isLightMode = document.body.classList.contains('light-mode');
+    const btn = document.getElementById('btn-theme');
+    
+    if(isLightMode) {
+        btn.innerHTML = '🌙 Gelap';
+        colors = { bg: 0xf8fafc, grid: 0x94a3b8, axes: 0x475569, u: 0x1d4ed8, v: 0xbe123c, res: 0x15803d, k: 0xb45309 };
+    } else {
+        btn.innerHTML = '☀️ Terang';
+        colors = { bg: 0x090b10, grid: 0x1e2436, axes: 0x344060, u: 0x4d9eff, v: 0xff6b8a, res: 0x2effc0, k: 0xffc740 };
+    }
+    
+    scene.background = new THREE.Color(colors.bg);
+    gridHelper.material.color.setHex(colors.grid);
+    axesHelper.setColors(0xef4444, 0x22c55e, 0x3b82f6); // XYZ default standar dipertahankan agar jelas
+    upd(false);
+}
+
+/* ── SETUP THREE.JS ── */
+const container = document.getElementById('canvas-container');
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(colors.bg);
+
+const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
+camera.position.set(15, 12, 15);
+camera.lookAt(0, 0, 0);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(container.clientWidth, container.clientHeight);
+container.appendChild(renderer.domElement);
+
+const controls = new THREE.OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.05;
+
+const gridHelper = new THREE.GridHelper(40, 40, colors.grid, colors.grid);
+scene.add(gridHelper);
+
+const axesHelper = new THREE.AxesHelper(20);
+scene.add(axesHelper);
+
+// Array penyimpan panah vektor
+let arrowHelpers = [];
+
+window.addEventListener('resize', () => {
+    camera.aspect = container.clientWidth / container.clientHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(container.clientWidth, container.clientHeight);
+});
+
+/* ── ANIMATION LOOP THREE.JS ── */
+function animate() {
+    requestAnimationFrame(animate);
+    controls.update();
+    renderer.render(scene, camera);
+}
+animate();
+
+/* ── UI & LOGIC ── */
+function gv(id){return parseFloat(document.getElementById(id).value) || 0;}
+function getVals(){return{
+    ux:gv('ux'), uy:gv('uy'), uz:gv('uz'), 
+    vx:gv('vx'), vy:gv('vy'), vz:gv('vz'), 
+    k:gv('sk'), op:document.getElementById('op-sel').value
+};}
+
+function cv(x, y, z, color) { 
+    return `<span class="col-vec" style="color:${color||'inherit'}; font-size:0.95em;"><span>${x}</span><span>${y}</span><span>${z}</span></span>`; 
+}
+
+function updateUI() {
+    const op = document.getElementById('op-sel').value;
+    document.getElementById('grp-v').style.display = (op === 'scale') ? 'none' : 'flex';
+    document.getElementById('grp-k').style.display = (op === 'scale') ? 'flex' : 'none';
+}
+
+function recenterCamera() {
+    const {ux,uy,uz,vx,vy,vz,op,k} = getVals();
+    let max = Math.max(Math.abs(ux), Math.abs(uy), Math.abs(uz), Math.abs(vx), Math.abs(vy), Math.abs(vz));
+    if(op === 'scale') max *= Math.max(1, Math.abs(k));
+    if(max === 0) max = 5;
+    
+    // Smooth camera transition using simple interpolation can be done, but instant set is fine for now
+    camera.position.set(max*1.5, max*1.2, max*1.5);
+    controls.target.set(0,0,0);
+}
+
+/* ── RENDER 3D VECTORS ── */
+function clearVectors() {
+    arrowHelpers.forEach(ah => scene.remove(ah));
+    arrowHelpers = [];
+}
+
+function drawVector(origin, dirVec, hexColor) {
+    const length = dirVec.length();
+    if(length < 0.001) return;
+    const dir = dirVec.clone().normalize();
+    
+    const headLength = Math.min(length * 0.3, 1.2);
+    const headWidth = headLength * 0.4;
+    
+    const arrow = new THREE.ArrowHelper(dir, origin, length, hexColor, headLength, headWidth);
+    
+    // Bikin garis sedikit lebih tebal
+    arrow.line.material.linewidth = 3; 
+    scene.add(arrow);
+    arrowHelpers.push(arrow);
+}
+
+function upd(autoRecenter = true) {
+    clearVectors();
+    const {ux,uy,uz,vx,vy,vz,k,op} = getVals();
+    
+    const vecU = new THREE.Vector3(ux, uy, uz);
+    const vecV = new THREE.Vector3(vx, vy, vz);
+    const origin = new THREE.Vector3(0, 0, 0);
+
+    let resVec = new THREE.Vector3();
+
+    if(op === 'add') {
+        resVec.addVectors(vecU, vecV);
+        drawVector(origin, vecU, colors.u);
+        drawVector(vecU, vecV, colors.v); // Tail to tip
+        drawVector(origin, resVec, colors.res);
+    } 
+    else if (op === 'sub') {
+        resVec.subVectors(vecU, vecV);
+        const negV = vecV.clone().negate();
+        drawVector(origin, vecU, colors.u);
+        drawVector(vecU, negV, colors.v);
+        drawVector(origin, resVec, colors.res);
+    } 
+    else if (op === 'cross') {
+        resVec.crossVectors(vecU, vecV);
+        drawVector(origin, vecU, colors.u);
+        drawVector(origin, vecV, colors.v);
+        drawVector(origin, resVec, colors.res);
+    }
+    else if (op === 'scale') {
+        resVec = vecU.clone().multiplyScalar(k);
+        drawVector(origin, vecU, colors.u); // Tampil tipis / menumpuk
+        drawVector(origin, resVec, colors.k);
+    } 
+    else {
+        drawVector(origin, vecU, colors.u);
+        drawVector(origin, vecV, colors.v);
+    }
+
+    // Hitung Aljabar
+    const magU = vecU.length();
+    const magV = vecV.length();
+    const magR = (op==='both') ? 0 : resVec.length();
+
+    document.getElementById('mag-u').textContent = magU.toFixed(2);
+    document.getElementById('mag-v').textContent = (op==='scale') ? '—' : magV.toFixed(2);
+    document.getElementById('mag-r').textContent = (op==='both') ? '—' : magR.toFixed(2);
+
+    let resultTxt = '';
+    const stU = `<span style="color:var(--blue)">u</span>`;
+    const stV = `<span style="color:var(--red)">v</span>`;
+
+    if(op === 'add') resultTxt = `${stU} + ${stV} = ${cv(resVec.x, resVec.y, resVec.z, 'var(--green)')}`;
+    else if(op === 'sub') resultTxt = `${stU} − ${stV} = ${cv(resVec.x, resVec.y, resVec.z, 'var(--green)')}`;
+    else if(op === 'cross') resultTxt = `${stU} × ${stV} = ${cv(resVec.x, resVec.y, resVec.z, 'var(--green)')}`;
+    else if(op === 'scale') resultTxt = `${k} · ${stU} = ${cv(Number(resVec.x.toFixed(2)), Number(resVec.y.toFixed(2)), Number(resVec.z.toFixed(2)), 'var(--gold)')}`;
+    else resultTxt = `${stU} = ${cv(ux,uy,uz,'var(--blue)')} &nbsp;|&nbsp; ${stV} = ${cv(vx,vy,vz,'var(--red)')}`;
+    
+    document.getElementById('result-info').innerHTML = resultTxt;
+
+    buildAljabar3D(op, {ux,uy,uz,vx,vy,vz,rx:resVec.x, ry:resVec.y, rz:resVec.z, magU, magV, magR, k});
+    
+    // Auto kamer jika ada angka besar masuk
+    if(autoRecenter && magR > camera.position.length()) recenterCamera();
+}
+
+/* ── ALJABAR 3D BUILDER ── */
+function sec(title,color,body){ return `<div class="alg-section"><h3 style="color:${color}">${title}</h3>${body}</div>`; }
+function step(label,formula){ return `<div class="alg-step"><span class="step-num">${label}</span><div style="font-size:13px; color:var(--text); margin-top:6px; display:flex; align-items:center; gap:8px; overflow-x:auto;">${formula}</div></div>`; }
+function box(val,c){ return `<div class="alg-box" style="color:${c};border-color:${c};">${val}</div>`; }
+function bold(v,c){return `<b style="color:${c||'var(--text)'}">${v}</b>`;}
+
+function buildAljabar3D(op, d) {
+    let html = '';
+    let dik = step('Vektor u', `u = ${cv(d.ux, d.uy, d.uz, 'var(--blue)')}`);
+    if(op !== 'scale') dik += step('Vektor v', `v = ${cv(d.vx, d.vy, d.vz, 'var(--red)')}`);
+    if(op === 'scale') dik += step('Skalar k', `<b style="color:var(--gold)">k = ${d.k}</b>`);
+    html += sec('📋 Diketahui', 'var(--text2)', dik);
+
+    if(op === 'add' || op === 'sub') {
+        const sign = op === 'add' ? '+' : '−';
+        html += sec(op === 'add' ? '➕ Penjumlahan' : '➖ Pengurangan', op==='add'?'var(--blue)':'var(--red)',
+            step('Operasi Baris', `${cv(d.ux, d.uy, d.uz)} ${sign} ${cv(d.vx, d.vy, d.vz)} = ${cv(`${d.ux}${sign}${d.vx}`, `${d.uy}${sign}${d.vy}`, `${d.uz}${sign}${d.vz}`)}`)
+        );
+        html += box(`Hasil = ${cv(d.rx, d.ry, d.rz, 'var(--green)')}`, 'var(--green)');
+    } 
+    else if (op === 'scale') {
+        html += sec('⚗️ Perkalian Skalar', 'var(--gold)',
+            step('Operasi', `${d.k} · ${cv(d.ux, d.uy, d.uz)} = ${cv(`${d.k}×${d.ux}`, `${d.k}×${d.uy}`, `${d.k}×${d.uz}`)}`)
+        );
+        html += box(`Hasil = ${cv(Number(d.rx.toFixed(2)), Number(d.ry.toFixed(2)), Number(d.rz.toFixed(2)), 'var(--gold)')}`, 'var(--gold)');
+    }
+    else if (op === 'cross') {
+        // Cross product matrix determinant visualization
+        const detHtml = `
+            <table style="border-left:2px solid var(--text); border-right:2px solid var(--text); padding:0 8px; text-align:center; font-family:'Fira Code',monospace;">
+                <tr><td style="padding:0 6px"><b>i</b></td><td style="padding:0 6px"><b>j</b></td><td style="padding:0 6px"><b>k</b></td></tr>
+                <tr style="color:var(--blue)"><td style="padding:0 6px">${d.ux}</td><td style="padding:0 6px">${d.uy}</td><td style="padding:0 6px">${d.uz}</td></tr>
+                <tr style="color:var(--red)"><td style="padding:0 6px">${d.vx}</td><td style="padding:0 6px">${d.vy}</td><td style="padding:0 6px">${d.vz}</td></tr>
+            </table>
+        `;
+        html += sec('✖️ Perkalian Silang (Cross Product)', 'var(--purple)',
+            step('Metode Determinan', detHtml) +
+            step('Ekspansi', `
+                <div style="line-height:1.8">
+                <b>i</b>((${d.uy}×${d.vz}) − (${d.uz}×${d.vy}))<br>
+                −<b>j</b>((${d.ux}×${d.vz}) − (${d.uz}×${d.vx}))<br>
+                +<b>k</b>((${d.ux}×${d.vy}) − (${d.uy}×${d.vx}))
+                </div>
+            `)
+        );
+        html += box(`u × v = ${cv(d.rx, d.ry, d.rz, 'var(--green)')}`, 'var(--green)');
+    }
+
+    html += sec('📏 Panjang / Magnitude di R³', 'var(--green)',
+        step('Panjang u', `|u| = √(${d.ux}² + ${d.uy}² + ${d.uz}²) ≈ ${bold(d.magU.toFixed(2), 'var(--blue)')}`) +
+        ((op !== 'scale' && op !== 'both') ? step('Panjang Resultan', `|r| = √(${d.rx}² + ${d.ry}² + ${d.rz}²) ≈ ${bold(d.magR.toFixed(2), 'var(--green)')}`) : '')
+    );
+
+    document.getElementById('alg-content').innerHTML = html;
+}
+
+function resetAll() {
+    document.getElementById('ux').value = 3; document.getElementById('uy').value = 4; document.getElementById('uz').value = 2;
+    document.getElementById('vx').value = 1; document.getElementById('vy').value = -2; document.getElementById('vz').value = 3;
+    document.getElementById('sk').value = 2;
+    document.getElementById('op-sel').value = 'add';
+    updateUI(); upd(); recenterCamera();
+}
+
+function switchTab(id,el){
+  document.querySelectorAll('.tab-body').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  el.classList.add('active');
+}
+
+function closePopup(){
+  const ov=document.getElementById('overlay');
+  ov.style.animation='fadeOut .25s ease forwards';
+  ov.addEventListener('animationend',()=>ov.style.display='none',{once:true});
+}
+
+setTimeout(() => { document.getElementById('overlay').style.display='flex'; }, 500);
+
+updateUI();
+upd();
+</script>
+</body>
+</html>
