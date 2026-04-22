@@ -61,6 +61,9 @@ header{ grid-area:hdr; display:flex; align-items:center; justify-content:space-b
 
 .c-badge{ position:absolute; top:16px; left:16px; background:var(--badge-bg); backdrop-filter:blur(10px); border:1px solid var(--border); border-radius:8px; padding:8px 14px; font-family:'Fira Code',monospace; font-size:12px; color:var(--text2); pointer-events:none;}
 .c-result{ position:absolute; bottom:16px; left:16px; background:var(--badge-bg); backdrop-filter:blur(12px); border:1px solid var(--border2); border-radius:10px; padding:12px 16px; font-family:'Fira Code',monospace; font-size:14px; display:flex; align-items:center; pointer-events:none; gap:4px;}
+.zoom-btns{ position:absolute; bottom:70px; right:16px; display:flex; flex-direction:column; gap:8px}
+.z-btn{ width:38px; height:38px; background:var(--badge-bg); backdrop-filter:blur(10px); border:1px solid var(--border2); border-radius:8px; color:var(--text2); font-size:20px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all .15s; user-select:none}
+.z-btn:hover{ background:var(--surface2); color:var(--text)}
 .z-hint{ position:absolute; bottom:16px; right:16px; font-family:'Fira Code',monospace; font-size:11px; color:var(--text3); text-align:right; pointer-events:none; background:var(--badge-bg); padding:6px 10px; border-radius:6px;}
 
 .panel{ grid-area:pnl; background:var(--surface); border-left:1px solid var(--border); display:flex; flex-direction:column; overflow:hidden; }
@@ -85,9 +88,7 @@ header{ grid-area:hdr; display:flex; align-items:center; justify-content:space-b
 
 .op-sel{ background:var(--surface3); border:1px solid var(--border2); border-radius:8px; color:var(--text); font-family:'Inter',sans-serif; font-size:13px; font-weight:600; padding:12px 14px; width:100%; outline:none; cursor:pointer;}
 .btn-row{ display:flex; gap:10px}
-.btn-anim{ flex:1; background:linear-gradient(130deg,var(--blue2),var(--purple2)); border:none; border-radius:10px; color:#fff; font-family:'Inter',sans-serif; font-weight:700; font-size:13px; padding:12px; cursor:pointer; transition:all .2s;}
-.btn-anim:hover{ opacity:.85}
-.btn-reset{ background:var(--surface3); border:1px solid var(--border2); border-radius:10px; color:var(--text2); font-family:'Inter',sans-serif; font-size:16px; font-weight:700; padding:12px 18px; cursor:pointer;}
+.btn-reset{ flex:1; background:var(--surface3); border:1px solid var(--border2); border-radius:10px; color:var(--text2); font-family:'Inter',sans-serif; font-size:14px; font-weight:700; padding:12px; cursor:pointer; text-align:center;}
 
 .alg-section{ background:var(--surface3); border:1px solid var(--border); border-radius:10px; padding:14px; display:flex; flex-direction:column; gap:10px;}
 .alg-section h3{ font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:1.5px; color:var(--text3); font-family:'Fira Code',monospace}
@@ -110,6 +111,40 @@ header{ grid-area:hdr; display:flex; align-items:center; justify-content:space-b
 .guide-text h4{ font-size:15px; font-weight:700; color:var(--text); margin-bottom:4px}
 .guide-text p{ font-size:13px; color:var(--text2); line-height:1.6}
 .btn-start{ width:100%; background:linear-gradient(130deg,var(--blue2),var(--purple2)); border:none; border-radius:12px; color:#fff; font-family:'Inter',sans-serif; font-weight:700; font-size:15px; padding:16px; cursor:pointer;}
+
+/* ─── CSS KHUSUS HP (MOBILE RESPONSIVE) ─── */
+@media (max-width: 768px) {
+  .layout {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 45vh 1fr; /* Header menyesuaikan, Kanvas 45% layar, Panel ambil sisanya */
+    grid-template-areas:
+      "hdr"
+      "cvs"
+      "pnl";
+  }
+  header {
+    flex-direction: column;
+    padding: 12px;
+    gap: 12px;
+    text-align: center;
+  }
+  .h-title { font-size: 17px; }
+  .stats { width: 100%; justify-content: space-evenly; }
+  .header-btns { width: 100%; justify-content: space-between; }
+  .header-btns .h-btn { flex: 1; text-align: center; }
+  
+  .panel { border-left: none; border-top: 1px solid var(--border); }
+  
+  .c-badge { font-size: 10px; padding: 6px 10px; top: 10px; left: 10px; }
+  .c-result { font-size: 11px; padding: 8px 12px; bottom: 10px; left: 10px; right: 10px; }
+  .zoom-btns { bottom: 50px; right: 10px; gap: 6px; }
+  .z-btn { width: 32px; height: 32px; font-size: 16px; }
+  .z-hint { display: none; } /* Sembunyikan hint tulisan agar tidak penuh di HP */
+  
+  .srow { grid-template-columns: 20px 1fr 1fr 1fr; } /* Perkecil label sumbu di HP */
+  .nin { font-size: 12px; padding: 6px; }
+  .op-sel { font-size: 12px; padding: 10px; }
+}
 </style>
 </head>
 <body>
@@ -128,13 +163,13 @@ header{ grid-area:hdr; display:flex; align-items:center; justify-content:space-b
         <span class="guide-icon">👀</span>
         <div class="guide-text">
           <h4>Kamera 360 Derajat</h4>
-          <p>Kini Anda berada di ruang 3D. <b>Klik kiri & geser</b> mouse untuk memutar kamera. <b>Klik kanan & geser</b> untuk memindah titik pusat. <b>Scroll</b> untuk Zoom.</p>
+          <p>Kini Anda berada di ruang 3D. <b>Klik (sentuh) & geser</b> untuk memutar kamera. <b>Gunakan 2 jari</b> untuk Zoom/Memindah titik pusat.</p>
         </div>
       </div>
       <div class="guide-item">
         <span class="guide-icon">✖️</span>
         <div class="guide-text">
-          <h4>Operasi Perkalian Silang (Cross Product)</h4>
+          <h4>Operasi Perkalian Silang (Cross)</h4>
           <p>Tersedia operasi baru khusus ruang 3D: <b>$u \times v$</b>. Putar kamera untuk melihat bagaimana resultannya selalu tegak lurus terhadap u dan v.</p>
         </div>
       </div>
@@ -169,9 +204,13 @@ header{ grid-area:hdr; display:flex; align-items:center; justify-content:space-b
 
   <div class="canvas-area">
     <div id="canvas-container"></div>
-    <div class="c-badge" style="top:16px;left:16px;">Sumbu: <span style="color:var(--red)">X</span> | <span style="color:var(--green)">Y</span> | <span style="color:var(--blue)">Z</span></div>
+    <div class="c-badge">Sumbu: <span style="color:var(--red)">X</span> | <span style="color:var(--green)">Y</span> | <span style="color:var(--blue)">Z</span></div>
     <div class="c-result" id="result-info">—</div>
-    <div class="z-hint">Klik Kiri: Putar Kamera | Klik Kanan: Geser (Pan) | Scroll: Zoom</div>
+    <div class="z-hint">Klik Kiri: Putar | Klik Kanan: Geser | Scroll: Zoom</div>
+    <div class="zoom-btns">
+      <button class="z-btn" onclick="zoomCam(1.2)" title="Zoom In">+</button>
+      <button class="z-btn" onclick="zoomCam(0.8)" title="Zoom Out">−</button>
+    </div>
   </div>
 
   <div class="panel">
@@ -232,7 +271,7 @@ header{ grid-area:hdr; display:flex; align-items:center; justify-content:space-b
       </div>
 
       <div class="btn-row">
-        <button class="btn-reset" onclick="resetAll()" title="Reset" style="padding:12px 14px">↺</button>
+        <button class="btn-reset" onclick="resetAll()" title="Kembalikan nilai awal">↺ Reset Nilai</button>
         <button class="btn-reset" onclick="recenterCamera()" title="Pusatkan Kamera">📹 Recenter</button>
       </div>
     </div>
@@ -266,7 +305,7 @@ function toggleTheme() {
     
     scene.background = new THREE.Color(colors.bg);
     gridHelper.material.color.setHex(colors.grid);
-    axesHelper.setColors(0xef4444, 0x22c55e, 0x3b82f6); // XYZ default standar dipertahankan agar jelas
+    axesHelper.setColors(0xef4444, 0x22c55e, 0x3b82f6);
     upd(false);
 }
 
@@ -293,7 +332,6 @@ scene.add(gridHelper);
 const axesHelper = new THREE.AxesHelper(20);
 scene.add(axesHelper);
 
-// Array penyimpan panah vektor
 let arrowHelpers = [];
 
 window.addEventListener('resize', () => {
@@ -301,6 +339,11 @@ window.addEventListener('resize', () => {
     camera.updateProjectionMatrix();
     renderer.setSize(container.clientWidth, container.clientHeight);
 });
+
+// Tombol Zoom Manual untuk Layar Sentuh HP
+function zoomCam(factor) {
+    camera.position.multiplyScalar(factor);
+}
 
 /* ── ANIMATION LOOP THREE.JS ── */
 function animate() {
@@ -334,7 +377,6 @@ function recenterCamera() {
     if(op === 'scale') max *= Math.max(1, Math.abs(k));
     if(max === 0) max = 5;
     
-    // Smooth camera transition using simple interpolation can be done, but instant set is fine for now
     camera.position.set(max*1.5, max*1.2, max*1.5);
     controls.target.set(0,0,0);
 }
@@ -354,8 +396,6 @@ function drawVector(origin, dirVec, hexColor) {
     const headWidth = headLength * 0.4;
     
     const arrow = new THREE.ArrowHelper(dir, origin, length, hexColor, headLength, headWidth);
-    
-    // Bikin garis sedikit lebih tebal
     arrow.line.material.linewidth = 3; 
     scene.add(arrow);
     arrowHelpers.push(arrow);
@@ -374,7 +414,7 @@ function upd(autoRecenter = true) {
     if(op === 'add') {
         resVec.addVectors(vecU, vecV);
         drawVector(origin, vecU, colors.u);
-        drawVector(vecU, vecV, colors.v); // Tail to tip
+        drawVector(vecU, vecV, colors.v); 
         drawVector(origin, resVec, colors.res);
     } 
     else if (op === 'sub') {
@@ -392,7 +432,7 @@ function upd(autoRecenter = true) {
     }
     else if (op === 'scale') {
         resVec = vecU.clone().multiplyScalar(k);
-        drawVector(origin, vecU, colors.u); // Tampil tipis / menumpuk
+        drawVector(origin, vecU, colors.u); 
         drawVector(origin, resVec, colors.k);
     } 
     else {
@@ -400,7 +440,6 @@ function upd(autoRecenter = true) {
         drawVector(origin, vecV, colors.v);
     }
 
-    // Hitung Aljabar
     const magU = vecU.length();
     const magV = vecV.length();
     const magR = (op==='both') ? 0 : resVec.length();
@@ -423,7 +462,6 @@ function upd(autoRecenter = true) {
 
     buildAljabar3D(op, {ux,uy,uz,vx,vy,vz,rx:resVec.x, ry:resVec.y, rz:resVec.z, magU, magV, magR, k});
     
-    // Auto kamer jika ada angka besar masuk
     if(autoRecenter && magR > camera.position.length()) recenterCamera();
 }
 
@@ -454,7 +492,6 @@ function buildAljabar3D(op, d) {
         html += box(`Hasil = ${cv(Number(d.rx.toFixed(2)), Number(d.ry.toFixed(2)), Number(d.rz.toFixed(2)), 'var(--gold)')}`, 'var(--gold)');
     }
     else if (op === 'cross') {
-        // Cross product matrix determinant visualization
         const detHtml = `
             <table style="border-left:2px solid var(--text); border-right:2px solid var(--text); padding:0 8px; text-align:center; font-family:'Fira Code',monospace;">
                 <tr><td style="padding:0 6px"><b>i</b></td><td style="padding:0 6px"><b>j</b></td><td style="padding:0 6px"><b>k</b></td></tr>
@@ -504,6 +541,7 @@ function closePopup(){
   ov.addEventListener('animationend',()=>ov.style.display='none',{once:true});
 }
 
+// Buka panduan otomatis saat pertama dimuat
 setTimeout(() => { document.getElementById('overlay').style.display='flex'; }, 500);
 
 updateUI();
